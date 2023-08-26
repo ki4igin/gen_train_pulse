@@ -1,0 +1,20 @@
+{
+    "configurations": [
+        {
+            "name": "gcc-arm",
+            "includePath": [
+                "${workspaceFolder}/code/**"
+            ],
+            "defines": [
+                "DEBUG",
+                "STM32L476xx",
+                "USE_FULL_LL_DRIVER",
+                "USE_HAL_DRIVER"
+            ],
+            "cStandard": "gnu23",
+            "compilerPath": "C:/toolchain/arm-gnu-toolchain-12.3.rel1-mingw-w64-i686-arm-none-eabi/bin/arm-none-eabi-gcc.exe -std=c2x",
+            "intelliSenseMode": "gcc-arm"
+        }
+    ],
+    "version": 4
+}
