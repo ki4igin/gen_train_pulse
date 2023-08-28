@@ -39,12 +39,12 @@ extern "C"
     void MX_GPIO_Init(void);
 
     /* USER CODE BEGIN Prototypes */
-    __STATIC_INLINE void RelayOn(void)
+    __STATIC_INLINE void relay_on(void)
     {
         LL_GPIO_SetOutputPin(RELAY_GPIO_Port, RELAY_Pin);
     }
 
-    __STATIC_INLINE void RelayOff(void)
+    __STATIC_INLINE void relay_off(void)
     {
         LL_GPIO_ResetOutputPin(RELAY_GPIO_Port, RELAY_Pin);
     }

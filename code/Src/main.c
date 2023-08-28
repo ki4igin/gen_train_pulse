@@ -6,23 +6,20 @@
 #include "tim.h"
 #include "conventer.h"
 
-typedef enum {
-    JOY_UP = 0,
-    JOY_DOWN = 1,
-    JOY_SEL = 2,
-    JOY_LEFT = 3,
-    JOY_RIGHT = 4,
-    JOY_NONE = 5,
+enum joy {
+    JOY_NONE = 0,
+    JOY_UP,
+    JOY_DOWN,
+    JOY_SEL,
+    JOY_LEFT,
+    JOY_RIGHT,
     JOY_MAX
-} JoyState_t;
+};
 
-typedef enum {
-    // STATE_DISABLE = 0,
-    // STATE_DISABLE_RESET,
-    // STATE_DISABLE_RESET_SURE,
-    // STATE_PULSE,
+enum state {
+    STATE_NONE = 0,
+    STATE_PULSE,
     STATE_PULSE_WAIT,
-    STATE_PULSE_RUN,
     STATE_PULSE_RUN_SINGLE,
     STATE_PULSE_WIDTH,
     STATE_PULSE_WIDTH_SET,
@@ -37,199 +34,88 @@ typedef enum {
     STATE_CONTINUOUS_PERIOD,
     STATE_CONTINUOUS_PERIOD_SET,
     STATE_PERIOD,
-    // STATE_CONTINUOUS_WIDTH,
-    // STATE_CONTINUOUS_WIDTH_SET,
     STATE_MAX
-} State_t;
+};
 
 // clang-format off
-const State_t fsmTable[STATE_MAX][JOY_MAX] = {
-    // [STATE_DISABLE][JOY_UP]    = STATE_PULSE,
-    // [STATE_DISABLE][JOY_DOWN]  = STATE_CONTINUOUS,
-    // [STATE_DISABLE][JOY_SEL]   = STATE_DISABLE,
-    // [STATE_DISABLE][JOY_LEFT]  = STATE_DISABLE,
-    // [STATE_DISABLE][JOY_RIGHT] = STATE_DISABLE_RESET,
-    // [STATE_DISABLE][JOY_NONE]  = STATE_DISABLE,
-
-    // [STATE_DISABLE_RESET][JOY_UP]    = STATE_DISABLE,
-    // [STATE_DISABLE_RESET][JOY_DOWN]  = STATE_DISABLE,
-    // [STATE_DISABLE_RESET][JOY_SEL]   = STATE_DISABLE,
-    // [STATE_DISABLE_RESET][JOY_LEFT]  = STATE_DISABLE,
-    // [STATE_DISABLE_RESET][JOY_RIGHT] = STATE_DISABLE_RESET_SURE,
-    // [STATE_DISABLE_RESET][JOY_NONE]  = STATE_DISABLE,
-
-    // [STATE_DISABLE_RESET_SURE][JOY_UP]    = STATE_DISABLE,
-    // [STATE_DISABLE_RESET_SURE][JOY_DOWN]  = STATE_DISABLE,
-    // [STATE_DISABLE_RESET_SURE][JOY_SEL]   = STATE_DISABLE,
-    // [STATE_DISABLE_RESET_SURE][JOY_LEFT]  = STATE_DISABLE,
-    // [STATE_DISABLE_RESET_SURE][JOY_RIGHT] = STATE_DISABLE,
-    // [STATE_DISABLE_RESET_SURE][JOY_NONE]  = STATE_DISABLE,
-
-    // [STATE_PULSE][JOY_UP]    = STATE_CONTINUOUS,
-    // [STATE_PULSE][JOY_DOWN]  = STATE_DISABLE,
-    // [STATE_PULSE][JOY_SEL]   = STATE_PULSE,
-    // [STATE_PULSE][JOY_LEFT]  = STATE_PULSE,
-    // [STATE_PULSE][JOY_RIGHT] = STATE_PULSE_PERIOD,
-    // [STATE_PULSE][JOY_NONE]  = STATE_PULSE,
-
-    [STATE_PULSE_RUN][JOY_UP]    = STATE_PULSE_POLARITY,
-    [STATE_PULSE_RUN][JOY_DOWN]  = STATE_CONTINUOUS,
-    [STATE_PULSE_RUN][JOY_SEL]   = STATE_PULSE_WAIT,
-    [STATE_PULSE_RUN][JOY_LEFT]  = STATE_PULSE_RUN,
-    [STATE_PULSE_RUN][JOY_RIGHT] = STATE_PULSE_WAIT,
-    [STATE_PULSE_RUN][JOY_NONE]  = STATE_PULSE_RUN,
+const enum state fsm_table[STATE_MAX][JOY_MAX] = {
+    [STATE_PULSE][JOY_UP]    = STATE_PULSE_POLARITY,
+    [STATE_PULSE][JOY_DOWN]  = STATE_CONTINUOUS,
+    [STATE_PULSE][JOY_SEL]   = STATE_PULSE_WAIT,
+    [STATE_PULSE][JOY_RIGHT] = STATE_PULSE_WAIT,
 
     [STATE_PULSE_WAIT][JOY_UP]    = STATE_PULSE_RUN_SINGLE,
     [STATE_PULSE_WAIT][JOY_DOWN]  = STATE_PULSE_RUN_SINGLE,
     [STATE_PULSE_WAIT][JOY_SEL]   = STATE_PULSE_RUN_SINGLE,
-    [STATE_PULSE_WAIT][JOY_LEFT]  = STATE_PULSE_RUN,
+    [STATE_PULSE_WAIT][JOY_LEFT]  = STATE_PULSE,
     [STATE_PULSE_WAIT][JOY_RIGHT] = STATE_PULSE_RUN_SINGLE,
-    [STATE_PULSE_WAIT][JOY_NONE]  = STATE_PULSE_RUN_SINGLE,
 
-    [STATE_PULSE_RUN_SINGLE][JOY_UP]    = STATE_PULSE_RUN_SINGLE,
-    [STATE_PULSE_RUN_SINGLE][JOY_DOWN]  = STATE_PULSE_RUN_SINGLE,
-    [STATE_PULSE_RUN_SINGLE][JOY_SEL]   = STATE_PULSE_RUN_SINGLE,
     [STATE_PULSE_RUN_SINGLE][JOY_LEFT]  = STATE_PULSE_WAIT,
-    [STATE_PULSE_RUN_SINGLE][JOY_RIGHT] = STATE_PULSE_RUN_SINGLE,
-    [STATE_PULSE_RUN_SINGLE][JOY_NONE]  = STATE_PULSE_RUN_SINGLE,
 
     [STATE_PULSE_WIDTH][JOY_UP]    = STATE_CONTINUOUS,
     [STATE_PULSE_WIDTH][JOY_DOWN]  = STATE_PERIOD,
     [STATE_PULSE_WIDTH][JOY_SEL]   = STATE_PULSE_WIDTH_SET,
-    [STATE_PULSE_WIDTH][JOY_LEFT]  = STATE_PULSE_WIDTH,
     [STATE_PULSE_WIDTH][JOY_RIGHT] = STATE_PULSE_WIDTH_SET,
-    [STATE_PULSE_WIDTH][JOY_NONE]  = STATE_PULSE_WIDTH,
 
-    [STATE_PULSE_WIDTH_SET][JOY_UP]    = STATE_PULSE_WIDTH_SET,
-    [STATE_PULSE_WIDTH_SET][JOY_DOWN]  = STATE_PULSE_WIDTH_SET,
     [STATE_PULSE_WIDTH_SET][JOY_SEL]   = STATE_PULSE_WIDTH,
     [STATE_PULSE_WIDTH_SET][JOY_LEFT]  = STATE_PULSE_WIDTH,
     [STATE_PULSE_WIDTH_SET][JOY_RIGHT] = STATE_PULSE_WIDTH,
-    [STATE_PULSE_WIDTH_SET][JOY_NONE]  = STATE_PULSE_WIDTH_SET,
 
     [STATE_PERIOD][JOY_UP]    = STATE_PULSE_WIDTH,
     [STATE_PERIOD][JOY_DOWN]  = STATE_PULSE_OFFSET,
     [STATE_PERIOD][JOY_SEL]   = STATE_PULSE_PERIOD,
-    [STATE_PERIOD][JOY_LEFT]  = STATE_PERIOD,
     [STATE_PERIOD][JOY_RIGHT] = STATE_PULSE_PERIOD,
-    [STATE_PERIOD][JOY_NONE]  = STATE_PERIOD,
 
     [STATE_PULSE_PERIOD][JOY_UP]    = STATE_CONTINUOUS_PERIOD,
     [STATE_PULSE_PERIOD][JOY_DOWN]  = STATE_CONTINUOUS_PERIOD,
     [STATE_PULSE_PERIOD][JOY_SEL]   = STATE_PULSE_PERIOD_SET,
     [STATE_PULSE_PERIOD][JOY_LEFT]  = STATE_PERIOD,
     [STATE_PULSE_PERIOD][JOY_RIGHT] = STATE_PULSE_PERIOD_SET,
-    [STATE_PULSE_PERIOD][JOY_NONE]  = STATE_PULSE_PERIOD,
 
-    [STATE_PULSE_PERIOD_SET][JOY_UP]    = STATE_PULSE_PERIOD_SET,
-    [STATE_PULSE_PERIOD_SET][JOY_DOWN]  = STATE_PULSE_PERIOD_SET,
     [STATE_PULSE_PERIOD_SET][JOY_SEL]   = STATE_PULSE_PERIOD,
     [STATE_PULSE_PERIOD_SET][JOY_LEFT]  = STATE_PULSE_PERIOD,
     [STATE_PULSE_PERIOD_SET][JOY_RIGHT] = STATE_PULSE_PERIOD,
-    [STATE_PULSE_PERIOD_SET][JOY_NONE]  = STATE_PULSE_PERIOD_SET,
 
     [STATE_CONTINUOUS_PERIOD][JOY_UP]    = STATE_PULSE_PERIOD,
     [STATE_CONTINUOUS_PERIOD][JOY_DOWN]  = STATE_PULSE_PERIOD,
     [STATE_CONTINUOUS_PERIOD][JOY_SEL]   = STATE_CONTINUOUS_PERIOD_SET,
     [STATE_CONTINUOUS_PERIOD][JOY_LEFT]  = STATE_PERIOD,
     [STATE_CONTINUOUS_PERIOD][JOY_RIGHT] = STATE_CONTINUOUS_PERIOD_SET,
-    [STATE_CONTINUOUS_PERIOD][JOY_NONE]  = STATE_CONTINUOUS_PERIOD,
 
-    [STATE_CONTINUOUS_PERIOD_SET][JOY_UP]    = STATE_CONTINUOUS_PERIOD_SET,
-    [STATE_CONTINUOUS_PERIOD_SET][JOY_DOWN]  = STATE_CONTINUOUS_PERIOD_SET,
     [STATE_CONTINUOUS_PERIOD_SET][JOY_SEL]   = STATE_CONTINUOUS_PERIOD,
     [STATE_CONTINUOUS_PERIOD_SET][JOY_LEFT]  = STATE_CONTINUOUS_PERIOD,
     [STATE_CONTINUOUS_PERIOD_SET][JOY_RIGHT] = STATE_CONTINUOUS_PERIOD,
-    [STATE_CONTINUOUS_PERIOD_SET][JOY_NONE]  = STATE_CONTINUOUS_PERIOD_SET,
 
     [STATE_PULSE_OFFSET][JOY_UP]    = STATE_PERIOD,
     [STATE_PULSE_OFFSET][JOY_DOWN]  = STATE_PULSE_POLARITY,
     [STATE_PULSE_OFFSET][JOY_SEL]   = STATE_PULSE_OFFSET_SET,
-    [STATE_PULSE_OFFSET][JOY_LEFT]  = STATE_PULSE_OFFSET,
     [STATE_PULSE_OFFSET][JOY_RIGHT] = STATE_PULSE_OFFSET_SET,
-    [STATE_PULSE_OFFSET][JOY_NONE]  = STATE_PULSE_OFFSET,
 
-    [STATE_PULSE_OFFSET_SET][JOY_UP]    = STATE_PULSE_OFFSET_SET,
-    [STATE_PULSE_OFFSET_SET][JOY_DOWN]  = STATE_PULSE_OFFSET_SET,
     [STATE_PULSE_OFFSET_SET][JOY_SEL]   = STATE_PULSE_OFFSET,
     [STATE_PULSE_OFFSET_SET][JOY_LEFT]  = STATE_PULSE_OFFSET,
     [STATE_PULSE_OFFSET_SET][JOY_RIGHT] = STATE_PULSE_OFFSET,
-    [STATE_PULSE_OFFSET_SET][JOY_NONE]  = STATE_PULSE_OFFSET_SET,
 
     [STATE_PULSE_POLARITY][JOY_UP]    = STATE_PULSE_OFFSET,
-    [STATE_PULSE_POLARITY][JOY_DOWN]  = STATE_PULSE_RUN,
+    [STATE_PULSE_POLARITY][JOY_DOWN]  = STATE_PULSE,
     [STATE_PULSE_POLARITY][JOY_SEL]   = STATE_PULSE_POLARITY_SET,
-    [STATE_PULSE_POLARITY][JOY_LEFT]  = STATE_PULSE_POLARITY,
     [STATE_PULSE_POLARITY][JOY_RIGHT] = STATE_PULSE_POLARITY_SET,
-    [STATE_PULSE_POLARITY][JOY_NONE]  = STATE_PULSE_POLARITY,
 
-    [STATE_PULSE_POLARITY_SET][JOY_UP]    = STATE_PULSE_POLARITY_SET,
-    [STATE_PULSE_POLARITY_SET][JOY_DOWN]  = STATE_PULSE_POLARITY_SET,
     [STATE_PULSE_POLARITY_SET][JOY_SEL]   = STATE_PULSE_POLARITY,
     [STATE_PULSE_POLARITY_SET][JOY_LEFT]  = STATE_PULSE_POLARITY,
     [STATE_PULSE_POLARITY_SET][JOY_RIGHT] = STATE_PULSE_POLARITY,
-    [STATE_PULSE_POLARITY_SET][JOY_NONE]  = STATE_PULSE_POLARITY_SET,
 
-    [STATE_CONTINUOUS][JOY_UP]    = STATE_PULSE_RUN,
+    [STATE_CONTINUOUS][JOY_UP]    = STATE_PULSE,
     [STATE_CONTINUOUS][JOY_DOWN]  = STATE_PULSE_WIDTH,
     [STATE_CONTINUOUS][JOY_SEL]   = STATE_CONTINUOUS_RUN,
-    [STATE_CONTINUOUS][JOY_LEFT]  = STATE_CONTINUOUS,
     [STATE_CONTINUOUS][JOY_RIGHT] = STATE_CONTINUOUS_RUN,
-    [STATE_CONTINUOUS][JOY_NONE]  = STATE_CONTINUOUS,
 
-    [STATE_CONTINUOUS_RUN][JOY_UP]    = STATE_CONTINUOUS_RUN,
-    [STATE_CONTINUOUS_RUN][JOY_DOWN]  = STATE_CONTINUOUS_RUN,
-    [STATE_CONTINUOUS_RUN][JOY_SEL]   = STATE_CONTINUOUS_RUN,
     [STATE_CONTINUOUS_RUN][JOY_LEFT]  = STATE_CONTINUOUS,
-    [STATE_CONTINUOUS_RUN][JOY_RIGHT] = STATE_CONTINUOUS_RUN,
-    [STATE_CONTINUOUS_RUN][JOY_NONE]  = STATE_CONTINUOUS_RUN,
-
-
-    // [STATE_CONTINUOUS][JOY_UP]    = STATE_DISABLE,
-    // [STATE_CONTINUOUS][JOY_DOWN]  = STATE_PULSE,
-    // [STATE_CONTINUOUS][JOY_SEL]   = STATE_CONTINUOUS,
-    // [STATE_CONTINUOUS][JOY_LEFT]  = STATE_CONTINUOUS,
-    // [STATE_CONTINUOUS][JOY_RIGHT] = STATE_CONTINUOUS_PERIOD,
-    // [STATE_CONTINUOUS][JOY_NONE]  = STATE_CONTINUOUS,
-
-    // [STATE_CONTINUOUS_PERIOD][JOY_UP]    = STATE_CONTINUOUS_WIDTH,
-    // [STATE_CONTINUOUS_PERIOD][JOY_DOWN]  = STATE_CONTINUOUS_WIDTH,
-    // [STATE_CONTINUOUS_PERIOD][JOY_SEL]   = STATE_CONTINUOUS_PERIOD,
-    // [STATE_CONTINUOUS_PERIOD][JOY_LEFT]  = STATE_CONTINUOUS,
-    // [STATE_CONTINUOUS_PERIOD][JOY_RIGHT] = STATE_CONTINUOUS_PERIOD_SET,
-    // [STATE_CONTINUOUS_PERIOD][JOY_NONE]  = STATE_CONTINUOUS_PERIOD,
-
-    // [STATE_CONTINUOUS_PERIOD_SET][JOY_UP]    = STATE_CONTINUOUS_PERIOD_SET,
-    // [STATE_CONTINUOUS_PERIOD_SET][JOY_DOWN]  = STATE_CONTINUOUS_PERIOD_SET,
-    // [STATE_CONTINUOUS_PERIOD_SET][JOY_SEL]   = STATE_CONTINUOUS_PERIOD_SET,
-    // [STATE_CONTINUOUS_PERIOD_SET][JOY_LEFT]  = STATE_CONTINUOUS_PERIOD,
-    // [STATE_CONTINUOUS_PERIOD_SET][JOY_RIGHT] = STATE_CONTINUOUS_PERIOD_SET,
-    // [STATE_CONTINUOUS_PERIOD_SET][JOY_NONE]  = STATE_CONTINUOUS_PERIOD_SET,
-
-    // [STATE_CONTINUOUS_WIDTH][JOY_UP]    = STATE_CONTINUOUS_PERIOD,
-    // [STATE_CONTINUOUS_WIDTH][JOY_DOWN]  = STATE_CONTINUOUS_PERIOD,
-    // [STATE_CONTINUOUS_WIDTH][JOY_SEL]   = STATE_CONTINUOUS_WIDTH,
-    // [STATE_CONTINUOUS_WIDTH][JOY_LEFT]  = STATE_CONTINUOUS,
-    // [STATE_CONTINUOUS_WIDTH][JOY_RIGHT] = STATE_CONTINUOUS_WIDTH_SET,
-    // [STATE_CONTINUOUS_WIDTH][JOY_NONE]  = STATE_CONTINUOUS_WIDTH,
-
-    // [STATE_CONTINUOUS_WIDTH_SET][JOY_UP]    = STATE_CONTINUOUS_WIDTH_SET,
-    // [STATE_CONTINUOUS_WIDTH_SET][JOY_DOWN]  = STATE_CONTINUOUS_WIDTH_SET,
-    // [STATE_CONTINUOUS_WIDTH_SET][JOY_SEL]   = STATE_CONTINUOUS_WIDTH_SET,
-    // [STATE_CONTINUOUS_WIDTH_SET][JOY_LEFT]  = STATE_CONTINUOUS_WIDTH,
-    // [STATE_CONTINUOUS_WIDTH_SET][JOY_RIGHT] = STATE_CONTINUOUS_WIDTH_SET,
-    // [STATE_CONTINUOUS_WIDTH_SET][JOY_NONE]  = STATE_CONTINUOUS_WIDTH_SET
 };
 
 // clang-format on
-typedef struct
-{
-    uint8_t btnOn :1;
-} Flags_t;
 
-Flags_t flags = {0};
 volatile uint32_t progTimerCnt = 0;
-volatile State_t state;
+volatile enum state state;
 
 static uint16_t pulseOffset = 10500;
 static uint16_t pulseWidth = 200;
@@ -238,21 +124,19 @@ static uint16_t pulsePeriod = 402;
 static uint32_t continue_period = 1000;
 
 void SystemClock_Config(void);
-void ButtonHandler(uint32_t joyPort);
-uint16_t PulseOffsetCalc(JoyState_t joyState, uint16_t offset);
-uint16_t PulseWidthCalc(JoyState_t joyState, uint16_t count);
-uint16_t PulsePeriodCalc(JoyState_t joyState, uint16_t period);
-uint16_t ContinWidthCalc(JoyState_t joyState, uint16_t width);
-uint16_t ContinPeriodCalc(JoyState_t joyState, uint16_t period);
-uint32_t PulsePolarityChange(JoyState_t joyState, uint32_t pol_old);
+void button_handler(enum joy joy);
+uint16_t pulse_offset_calc(enum joy joy, uint16_t offset);
+uint16_t pulse_width_calc(enum joy joy, uint16_t count);
+uint16_t pulse_period_calc(enum joy joy, uint16_t period);
+uint16_t contin_width_calc(enum joy joy, uint16_t width);
+uint16_t contin_period_calc(enum joy joy, uint16_t period);
+uint32_t pulse_polarity_change(enum joy joy, uint32_t pol_old);
 
-inline static void start_pulse()
+inline static void start_pulse(void)
 {
     if (LL_TIM_IsEnabledCounter(TIM2)) {
         return;
     }
-
-    // LL_EXTI_DisableIT_0_31(LL_EXTI_LINE_14);
     LL_TIM_SetCounter(TIM2, UINT32_MAX - pulseOffset);
     LL_TIM_SetCounter(TIM3, TIM3_PERIOD - 1);
     LL_TIM_OC_SetCompareCH1(TIM3, 8 * pulseWidth / 100);
@@ -260,9 +144,18 @@ inline static void start_pulse()
     LL_TIM_EnableCounter(TIM2);
     LL_TIM_EnableCounter(TIM3);
     LL_TIM_ClearFlag_CC1(TIM2);
+    progTimerCnt = 0;
 }
 
-inline static void start_continue()
+static void stop_pulse(void)
+{
+    LL_TIM_DisableCounter(TIM3);
+    LL_TIM_DisableCounter(TIM2);
+    LL_TIM_SetCounter(TIM3, TIM3_PERIOD - 1);
+    LL_TIM_SetCounter(TIM2, 0);
+}
+
+inline static void start_continue(void)
 {
     uint32_t period = (continue_period * 80) / 1000;
     LL_TIM_SetAutoReload(TIM3, period - 1);
@@ -271,7 +164,7 @@ inline static void start_continue()
     LL_TIM_EnableCounter(TIM3);
 }
 
-inline static void stop_continue()
+inline static void stop_continue(void)
 {
     LL_TIM_DisableCounter(TIM3);
     LL_TIM_SetAutoReload(TIM3, TIM3_PERIOD - 1);
@@ -308,7 +201,7 @@ int main(void)
     // LL_TIM_SetCounter(TIM3, 80 - 1);
     // LL_TIM_SetCounter(TIM2, 0);
     BSP_LCD_GLASS_DisplayString((uint8_t *)"PULSE");
-    state = STATE_PULSE_RUN;
+    state = STATE_PULSE;
 
     LL_EXTI_EnableEvent_0_31(LL_EXTI_LINE_14);
     LL_EXTI_EnableRisingTrig_0_31(LL_EXTI_LINE_14);
@@ -372,18 +265,43 @@ void ExtInt_Callback()
     start_pulse();
 }
 
+static enum joy get_joy(uint32_t pin)
+{
+    enum joy joy = JOY_NONE;
+
+    if ((pin & JOY_CENTER_Pin) == JOY_CENTER_Pin) {
+        joy = JOY_SEL;
+    } else if ((pin & JOY_DOWN_Pin) == JOY_DOWN_Pin) {
+        joy = JOY_DOWN;
+    } else if ((pin & JOY_UP_Pin) == JOY_UP_Pin) {
+        joy = JOY_UP;
+    } else if ((pin & JOY_LEFT_Pin) == JOY_LEFT_Pin) {
+        joy = JOY_LEFT;
+    } else if ((pin & JOY_RIGHT_Pin) == JOY_RIGHT_Pin) {
+        joy = JOY_RIGHT;
+    } else {
+        ;
+    }
+    return joy;
+}
+
 #define MAX_TIME_SEC 20
 
 void Tim6Update_Callback()
 {
-    uint32_t joyPort = LL_GPIO_ReadInputPort(JOY_GPIO_Port) & JOY_ALL_Pin;
-    if (joyPort) {
-        if (!flags.btnOn) {
-            flags.btnOn = 1;
-            ButtonHandler(joyPort);
+    static uint32_t btn_on = 0;
+
+    uint32_t joy_pin = LL_GPIO_ReadInputPort(JOY_GPIO_Port) & JOY_ALL_Pin;
+    if (joy_pin) {
+        if (btn_on == 0) {
+            btn_on = 1;
+            enum joy joy = get_joy(joy_pin);
+            if (joy != JOY_NONE) {
+                button_handler(joy);
+            }
         }
     } else {
-        flags.btnOn = 0;
+        btn_on = 0;
     }
     if (state == STATE_PULSE_RUN_SINGLE) {
         uint32_t time_s = progTimerCnt / 100;
@@ -400,65 +318,43 @@ void Tim6Update_Callback()
         }
 
         if (time_s > MAX_TIME_SEC) {
-            ButtonHandler(JOY_LEFT_Pin);
-            RelayOff();
+            button_handler(JOY_LEFT_Pin);
+            relay_off();
         };
     }
 
     progTimerCnt++;
 }
 
-void ButtonHandler(uint32_t joyPort)
+void button_handler(enum joy joy)
 {
-    JoyState_t joyState = JOY_NONE;
-    if ((joyPort & JOY_CENTER_Pin) == JOY_CENTER_Pin) {
-        joyState = JOY_SEL;
-    } else if ((joyPort & JOY_DOWN_Pin) == JOY_DOWN_Pin) {
-        joyState = JOY_DOWN;
-    } else if ((joyPort & JOY_UP_Pin) == JOY_UP_Pin) {
-        joyState = JOY_UP;
-    } else if ((joyPort & JOY_LEFT_Pin) == JOY_LEFT_Pin) {
-        joyState = JOY_LEFT;
-    } else if ((joyPort & JOY_RIGHT_Pin) == JOY_RIGHT_Pin) {
-        joyState = JOY_RIGHT;
-    } else {
-        return;
+    enum state new_state = fsm_table[state][joy];
+    if (new_state != STATE_NONE) {
+        state = new_state;
     }
 
-    State_t stateOld = state;
-    state = fsmTable[stateOld][joyState];
-
     switch (state) {
-    case STATE_PULSE_RUN:
+    case STATE_PULSE:
         LL_EXTI_DisableIT_0_31(LL_EXTI_LINE_14);
-        LL_TIM_DisableCounter(TIM3);
-        LL_TIM_DisableCounter(TIM2);
-        LL_TIM_SetCounter(TIM3, TIM3_PERIOD - 1);
-        LL_TIM_SetCounter(TIM2, 0);
+        stop_pulse();
         BSP_LCD_GLASS_DisplayString((uint8_t *)"PULSE");
         break;
     case STATE_PULSE_WAIT:
-
         if (LL_TIM_IsEnabledCounter(TIM2)) {
             while (LL_TIM_IsActiveFlag_CC1(TIM2) == 0) {
                 ;
             }
         }
-        RelayOff();
-        LL_TIM_DisableCounter(TIM3);
-        LL_TIM_DisableCounter(TIM2);
-        LL_TIM_SetCounter(TIM3, TIM3_PERIOD - 1);
-        LL_TIM_SetCounter(TIM2, 0);
+        stop_pulse();
+        relay_off();
         BSP_LCD_GLASS_DisplayString((uint8_t *)"WAIT");
         LL_EXTI_EnableIT_0_31(LL_EXTI_LINE_14);
         break;
     case STATE_PULSE_RUN_SINGLE:
-        RelayOn();
+        relay_on();
         LL_mDelay(50);
         start_pulse();
         BSP_LCD_GLASS_DisplayString((uint8_t *)"RUN S");
-        progTimerCnt = 0;
-        // state = STATE_PULSE_WAIT;
         break;
     case STATE_CONTINUOUS:
         stop_continue();
@@ -472,14 +368,14 @@ void ButtonHandler(uint32_t joyPort)
         BSP_LCD_GLASS_DisplayString((uint8_t *)"OFFSET");
         break;
     case STATE_PULSE_OFFSET_SET: {
-        pulseOffset = PulseOffsetCalc(joyState, pulseOffset);
+        pulseOffset = pulse_offset_calc(joy, pulseOffset);
         break;
     }
     case STATE_PULSE_WIDTH:
         BSP_LCD_GLASS_DisplayString((uint8_t *)"WIDTH");
         break;
     case STATE_PULSE_WIDTH_SET: {
-        pulseWidth = PulseWidthCalc(joyState, pulseWidth);
+        pulseWidth = pulse_width_calc(joy, pulseWidth);
         break;
     }
     case STATE_PERIOD:
@@ -492,10 +388,10 @@ void ButtonHandler(uint32_t joyPort)
         BSP_LCD_GLASS_DisplayString((uint8_t *)"CONTIN");
         break;
     case STATE_PULSE_PERIOD_SET:
-        pulsePeriod = PulsePeriodCalc(joyState, pulsePeriod);
+        pulsePeriod = pulse_period_calc(joy, pulsePeriod);
         break;
     case STATE_CONTINUOUS_PERIOD_SET:
-        continue_period = ContinPeriodCalc(joyState, continue_period);
+        continue_period = contin_period_calc(joy, continue_period);
         break;
     case STATE_PULSE_POLARITY:
         BSP_LCD_GLASS_DisplayString((uint8_t *)"POLAR");
@@ -505,7 +401,7 @@ void ButtonHandler(uint32_t joyPort)
             LL_TIM_OC_GetPolarity(TIM3, LL_TIM_CHANNEL_CH1) == LL_TIM_OCPOLARITY_HIGH
                 ? 1
                 : 0;
-        pol = PulsePolarityChange(joyState, pol);
+        pol = pulse_polarity_change(joy, pol);
 
         if (pol) {
             LL_TIM_OC_SetPolarity(TIM3, LL_TIM_CHANNEL_CH1, LL_TIM_OCPOLARITY_HIGH);
@@ -520,9 +416,9 @@ void ButtonHandler(uint32_t joyPort)
     }
 }
 
-uint16_t PulseOffsetCalc(JoyState_t joyState, uint16_t offset)
+uint16_t pulse_offset_calc(enum joy joy, uint16_t offset)
 {
-    switch (joyState) {
+    switch (joy) {
     case JOY_SEL:
         break;
     case JOY_UP:
@@ -553,9 +449,9 @@ uint16_t PulseOffsetCalc(JoyState_t joyState, uint16_t offset)
     return offset;
 }
 
-uint16_t PulseWidthCalc(JoyState_t joyState, uint16_t width)
+uint16_t pulse_width_calc(enum joy joy, uint16_t width)
 {
-    switch (joyState) {
+    switch (joy) {
     case JOY_SEL:
         break;
     case JOY_UP:
@@ -587,9 +483,9 @@ uint16_t PulseWidthCalc(JoyState_t joyState, uint16_t width)
     return width;
 }
 
-uint16_t PulsePeriodCalc(JoyState_t joyState, uint16_t period)
+uint16_t pulse_period_calc(enum joy joy, uint16_t period)
 {
-    switch (joyState) {
+    switch (joy) {
     case JOY_SEL:
         break;
     case JOY_UP:
@@ -621,9 +517,9 @@ uint16_t PulsePeriodCalc(JoyState_t joyState, uint16_t period)
     return period;
 }
 
-uint16_t ContinPeriodCalc(JoyState_t joyState, uint16_t period)
+uint16_t contin_period_calc(enum joy joy, uint16_t period)
 {
-    switch (joyState) {
+    switch (joy) {
     case JOY_SEL:
         break;
     case JOY_UP:
@@ -656,9 +552,9 @@ uint16_t ContinPeriodCalc(JoyState_t joyState, uint16_t period)
     return period;
 }
 
-uint32_t PulsePolarityChange(JoyState_t joyState, uint32_t pol_old)
+uint32_t pulse_polarity_change(enum joy joy, uint32_t pol_old)
 {
-    switch (joyState) {
+    switch (joy) {
     case JOY_SEL:
         break;
     case JOY_UP:
