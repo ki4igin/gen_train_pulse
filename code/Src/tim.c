@@ -1,5 +1,7 @@
 #include "tim.h"
 
+// Используется для задания количества импульсов в пачке и ее периода
+// Время переполнения 402 мкс, шаг таймера 1 мкс
 void MX_TIM2_Init(void)
 {
     LL_TIM_InitTypeDef TIM_InitStruct = {0};
@@ -42,6 +44,7 @@ void MX_TIM2_Init(void)
 }
 
 /* TIM3 init function */
+// Используется для генерации импульсов, время переполнения TIM3_PERIOD / 80e6 сек
 void MX_TIM3_Init(void)
 {
     LL_TIM_InitTypeDef TIM_InitStruct = {0};
@@ -89,6 +92,7 @@ void MX_TIM3_Init(void)
 }
 
 // Время переполнения 10 мс
+// Используется как системный таймер
 void MX_TIM6_Init(void)
 {
     LL_TIM_InitTypeDef TIM_InitStruct = {0};

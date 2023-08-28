@@ -2,6 +2,8 @@
 #include "stm32l4xx_it.h"
 #include "stm32l4xx_ll_tim.h"
 #include "tim.h"
+#include "settings.h"
+#include "state.h"
 
 /******************************************************************************/
 /*           Cortex-M4 Processor Interruption and Exception Handlers          */
@@ -100,12 +102,11 @@ void TIM2_IRQHandler(void)
     if (LL_TIM_IsActiveFlag_CC1(TIM2)) {
         LL_TIM_ClearFlag_CC1(TIM2);
         static uint32_t cnt;
-        if (cnt++ > 0) {
+        if (++cnt >= settings.train_count) {
             LL_TIM_DisableCounter(TIM3);
             LL_TIM_DisableCounter(TIM2);
             // LL_TIM_SetCounter(TIM2, 0);
             cnt = 0;
-            LL_EXTI_EnableIT_0_31(LL_EXTI_LINE_14);
         }
 
         LL_TIM_SetCounter(TIM3, TIM3_PERIOD - 1);

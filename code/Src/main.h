@@ -16,7 +16,6 @@
 
 void Error_Handler(void);
 void Tim6Update_Callback(void);
-void ExtInt_Callback(void);
 
 #define SAI1_MCK_Pin                   LL_GPIO_PIN_2
 #define SAI1_MCK_GPIO_Port             GPIOE
