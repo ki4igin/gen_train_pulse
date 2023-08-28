@@ -391,7 +391,7 @@ void Tim6Update_Callback()
         if (old_time_s != time_s) {
             old_time_s = time_s;
             uint8_t buf[6] = {' ', ' ', ' ', 'S', 'e', 'c'};
-            Bin2Str((MAX_TIME_SEC - time_s) * 1000, buf, 5);
+            bin2str((MAX_TIME_SEC - time_s) * 1000, buf);
             buf[2] = (uint8_t)' ';
             buf[3] = (uint8_t)'S';
             buf[4] = (uint8_t)'e';
@@ -544,7 +544,7 @@ uint16_t PulseOffsetCalc(JoyState_t joyState, uint16_t offset)
         offset = 8000;
     } else {
         uint8_t buf[6] = {0};
-        Bin2Str((uint16_t)(offset), buf, 5);
+        bin2str((uint16_t)(offset), buf);
         buf[3] = ' ';
         buf[4] = 'm';
         buf[5] = 's';
@@ -577,7 +577,7 @@ uint16_t PulseWidthCalc(JoyState_t joyState, uint16_t width)
         width = 200;
     } else {
         uint8_t buf[6] = {0};
-        Bin2Str((uint16_t)(width * 100), buf, 5);
+        bin2str((uint16_t)(width * 100), buf);
         buf[3] = ' ';
         buf[4] = 'n';
         buf[5] = 's';
@@ -612,7 +612,7 @@ uint16_t PulsePeriodCalc(JoyState_t joyState, uint16_t period)
         period = 400;
     } else {
         uint8_t buf[6] = {0};
-        Bin2Str((uint16_t)((period - 200) * 100), buf, 5);
+        bin2str((uint16_t)((period - 200) * 100), buf);
         buf[3] = ' ';
         buf[4] = 'u';
         buf[5] = 's';
@@ -646,7 +646,7 @@ uint16_t ContinPeriodCalc(JoyState_t joyState, uint16_t period)
         period = 1000;
     } else {
         uint8_t buf[6] = {0};
-        Bin2Str((uint16_t)(period), buf, 5);
+        bin2str((uint16_t)(period), buf);
         buf[0] = ' ';
         buf[3] = ' ';
         buf[4] = 'u';

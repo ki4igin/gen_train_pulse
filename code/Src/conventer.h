@@ -3,6 +3,6 @@
 
 #include "stm32l4xx.h"
 
-void Bin2Str(uint16_t data, uint8_t *pbuf, uint8_t bufSize);
+void bin2str(uint16_t data, uint8_t buf[static 5]);
 
 #endif
