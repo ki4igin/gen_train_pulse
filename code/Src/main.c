@@ -93,7 +93,7 @@ void Tim6Update_Callback()
         }
 
         if (time_s > MAX_TIME_SEC) {
-            button_handler(JOY_LEFT_Pin);
+            button_handler(JOY_LEFT);            
             relay_off();
         };
     }
