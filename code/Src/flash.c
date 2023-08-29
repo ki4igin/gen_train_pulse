@@ -24,13 +24,15 @@ static void flash_clear_err(void)
                | FLASH_SR_OPTVERR;
 }
 
-static void flash_program_u32(uint32_t adr, uint32_t data)
+static void flash_program_u64(uint32_t adr, uint64_t data)
 {
     while (FLASH->SR & FLASH_SR_BSY) {
         ;
     }
 
-    *(__IO uint32_t *)adr = data;
+    *(__IO uint32_t *)adr = (uint32_t)data;
+    __ISB();
+    *(__IO uint32_t *)(adr + 4) = (uint32_t)(data >> 32);
 
     while ((FLASH->SR & FLASH_SR_EOP) != FLASH_SR_EOP) {
         ;
@@ -59,19 +61,19 @@ void flash_erase_page(uint32_t page)
     flash_lock();
 }
 
-void flash_memcpy_u32(void *src, void *dst, uint32_t size)
+void flash_memcpy_u64(void *src, void *dst, uint32_t size)
 {
     flash_unlock();
     flash_clear_err();
 
     FLASH->CR |= FLASH_CR_EOPIE | FLASH_CR_PG;
 
-    uint32_t *s = src;
-    uint32_t *d = dst;
+    uint64_t *s = src;
+    uint64_t *d = dst;
 
-    size >>= 2;
+    size >>= 3;
     do {
-        flash_program_u32((uint32_t)d++, *s++);
+        flash_program_u64((uint32_t)d++, *s++);
     } while (--size);
 
     FLASH->CR &= ~(FLASH_CR_EOPIE | FLASH_CR_PG);

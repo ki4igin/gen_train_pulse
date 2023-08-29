@@ -72,7 +72,7 @@ const enum state fsm_table[STATE_MAX][JOY_MAX] = {
     [STATE_SETTINGS_PULSE][JOY_RIGHT] = STATE_SETTINGS_PULSE_WIDTH,
 
     [STATE_SETTINGS_PULSE_WIDTH][JOY_SEL] = STATE_SETTINGS_PULSE_WIDTH_SET,
-    [STATE_SETTINGS_PULSE_WIDTH][JOY_LEFT] = STATE_SETTINGS_PULSE_WIDTH_SET,
+    [STATE_SETTINGS_PULSE_WIDTH][JOY_LEFT] = STATE_SETTINGS_PULSE,
     [STATE_SETTINGS_PULSE_WIDTH][JOY_RIGHT] = STATE_SETTINGS_PULSE_WIDTH_SET,
 
     [STATE_SETTINGS_PULSE_WIDTH_SET][JOY_SEL] = STATE_SETTINGS_PULSE_WIDTH,
@@ -223,11 +223,12 @@ static uint32_t pulse_delay_calc(enum joy joy, uint32_t delay_us)
         delay_us = DELAY_MIX_US;
     } else {
         uint8_t buf[6] = {0};
-        bin2str((uint16_t)(delay_us), buf);
+        bin2str((uint16_t)(delay_us / 10), buf);        
+				buf[0] = ' ';
         buf[3] = ' ';
         buf[4] = 'm';
         buf[5] = 's';
-        BSP_LCD_GLASS_DisplayStringPoint(buf, 1);
+        BSP_LCD_GLASS_DisplayString(buf);
     }
     return delay_us;
 }
@@ -375,7 +376,9 @@ enum state state_action(enum state state, enum joy joy)
         polarity_change(joy);
     } break;
     case STATE_SETTINGS_SAVE: {
-        settings_write_to_flash();
+        if (settings_is_change()) {
+            settings_write_to_flash();
+        }
         state = STATE_SETTINGS;
     } break;
     default:

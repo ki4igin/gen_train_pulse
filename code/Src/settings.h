@@ -5,7 +5,6 @@
 #include <assert.h>
 
 #define SETTINGS_MAGIC_KEY 0x00112233
-#define SETTINGS_SIZE      32
 
 struct settings {
     uint32_t magic_key;
@@ -21,8 +20,10 @@ struct settings {
 extern struct settings settings;
 
 void settings_init(void);
+uint32_t settings_is_change(void);
 void settings_write_to_flash(void);
 
-static_assert(sizeof(struct settings) == SETTINGS_SIZE, "Err");
+static_assert((sizeof(struct settings) & 0b111) == 0,
+              "Err: size setting from save to flash must be a multiple of 8");
 
 #endif
